@@ -70,7 +70,7 @@ jobs:
           yarn test
   publish:
     name: Publish
-    needs: lint,build
+    needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
