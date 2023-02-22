@@ -16,7 +16,7 @@ jobs:
       - name: Setup Yarn
         run: npm install -g yarn
       - name: Cache NPM dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           # cache files are stored in `~/.npm` on Linux/macOS
           path: node_modules
@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: '18.x'
       - name: Load dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: node_modules
           key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/yarn.lock') }}
@@ -58,7 +58,7 @@ jobs:
         with:
           node-version: '18.x'
       - name: Load dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: node_modules
           key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/yarn.lock') }}
@@ -73,14 +73,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         # TODO: remove this once working
         with:
-          dry_run: true          
+          dry_run: true
           
