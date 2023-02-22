@@ -1,4 +1,6 @@
 import {eachDayOfInterval} from 'date-fns';
+import {PublicHolidayRule} from './public-holiday-rule';
+import {isDateList} from './util/is-date-list';
 import {isWeekDay} from './util/is-week-day';
 
 export class BusinessDayCounter {
@@ -17,20 +19,32 @@ export class BusinessDayCounter {
    *
    * @param firstDate Start Date to lookup from
    * @param secondDate End Date to lookup from
-   * @param publicHolidays Public holidays to exclude
+   * @param publicHolidays List of public holiday dates or more complex rules to
+   * consider when counting business days
    * @returns Number of business days between given date range
    */
-  static BusinessDaysBetweenTwoDates(
+  static BusinessDaysBetweenTwoDates<T = Date | PublicHolidayRule>(
     firstDate: Date,
     secondDate: Date,
-    publicHolidays: Date[]
+    publicHolidays: T[]
   ): number {
-    const publicHolidaysStringList = publicHolidays.map(d => d.toDateString());
+    if (!publicHolidays.length) {
+      return BusinessDayCounter.WeekdaysBetweenTwoDates(firstDate, secondDate);
+    }
 
-    return BusinessDayCounter.GetDatesInRange(firstDate, secondDate)
-      .filter(date => isWeekDay(date))
-      .filter(date => !publicHolidaysStringList.includes(date.toDateString()))
-      .length;
+    if (isDateList(publicHolidays)) {
+      const publicHolidaysStringList = publicHolidays.map((d: Date) =>
+        d.toDateString()
+      );
+
+      return BusinessDayCounter.GetDatesInRange(firstDate, secondDate)
+        .filter(date => isWeekDay(date))
+        .filter(date => !publicHolidaysStringList.includes(date.toDateString()))
+        .length;
+    }
+
+    // TODO: implement rules for counting business dates from public holidays
+    return 0;
   }
 
   /**
