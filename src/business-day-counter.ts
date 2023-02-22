@@ -1,9 +1,13 @@
-import {eachDayOfInterval} from 'date-fns';
-import {PublicHolidayRule} from './public-holiday-rule';
-import {isDateList} from './util/is-date-list';
-import {isWeekDay} from './util/is-week-day';
+import {PublicHolidayRule} from './types/public-holiday-rule';
+import {isDateListGuard} from './guards/is-date-list-guard';
+import {isHolidayOnDatesRuleGuard} from './guards/is-holiday-on-dates-rule-guard';
+import {isWeekDay} from './utils/is-week-day';
+import {BaseDayCounter} from './base-day-counter';
+import {dateToMonth} from './utils/date-to-month';
+import {nthDayOfMonth} from './utils/nth-day-of-month';
+import {dateToDay} from './utils/date-to-day';
 
-export class BusinessDayCounter {
+export class BusinessDayCounter extends BaseDayCounter {
   /**
    * @param firstDate Start Date to lookup from
    * @param secondDate End Date to lookup upto
@@ -16,55 +20,167 @@ export class BusinessDayCounter {
   }
 
   /**
-   *
    * @param firstDate Start Date to lookup from
    * @param secondDate End Date to lookup from
    * @param publicHolidays List of public holiday dates or more complex rules to
    * consider when counting business days
    * @returns Number of business days between given date range
    */
-  static BusinessDaysBetweenTwoDates<T = Date | PublicHolidayRule>(
+  static BusinessDaysBetweenTwoDates(
     firstDate: Date,
     secondDate: Date,
-    publicHolidays: T[]
+    publicHolidays: Date[] | PublicHolidayRule
   ): number {
-    if (!publicHolidays.length) {
+    if (isDateListGuard(publicHolidays)) {
+      return BusinessDayCounter._CountBusinessDaysForListOfHolidays(
+        firstDate,
+        secondDate,
+        publicHolidays
+      );
+    }
+
+    if (!publicHolidays.holidays.length) {
       return BusinessDayCounter.WeekdaysBetweenTwoDates(firstDate, secondDate);
     }
 
-    if (isDateList(publicHolidays)) {
-      const publicHolidaysStringList = publicHolidays.map((d: Date) =>
-        d.toDateString()
+    const {holidaysToOffset, calculatedPublicHolidays, workdays} =
+      BusinessDayCounter._CountBusinessDaysForComplexHolidayPatterns(
+        firstDate,
+        secondDate,
+        publicHolidays
       );
 
-      return BusinessDayCounter.GetDatesInRange(firstDate, secondDate)
-        .filter(date => isWeekDay(date))
-        .filter(date => !publicHolidaysStringList.includes(date.toDateString()))
-        .length;
-    }
+    const daysToOffset = BusinessDayCounter._CountDaysToOffset({
+      holidaysToOffset,
+      calculatedPublicHolidays,
+      endDate: secondDate,
+    });
 
-    // TODO: implement rules for counting business dates from public holidays
-    return 0;
+    return workdays.length - daysToOffset;
   }
 
   /**
-   * @param start Date to start lookup from and excluding the given value
-   * @param end Date to start lookup from and excluding the given value
-   * @returns dates in between two given dates, 0 otherwise
+   * @internal Internal method to business calculate days between date range
+   *
+   * @description Counts Business days between two dates while considering
+   * supplied list of public holidays.
    */
-  static GetDatesInRange(start: Date, end: Date) {
-    try {
-      const [, ...inBetween] = eachDayOfInterval({
-        start,
-        end,
-      });
-
-      // remove last date
-      inBetween.pop();
-
-      return inBetween;
-    } catch (err) {
-      return [];
+  private static _CountBusinessDaysForListOfHolidays(
+    firstDate: Date,
+    secondDate: Date,
+    publicHolidays: Date[]
+  ) {
+    if (!publicHolidays.length) {
+      return BusinessDayCounter.WeekdaysBetweenTwoDates(firstDate, secondDate);
     }
+    const publicHolidaysStringList = publicHolidays.map((d: Date) =>
+      d.toDateString()
+    );
+
+    return BusinessDayCounter.GetDatesInRange(firstDate, secondDate)
+      .filter(date => isWeekDay(date))
+      .filter(date => !publicHolidaysStringList.includes(date.toDateString()))
+      .length;
+  }
+
+  /**
+   * @internal Internal method to business calculate days between date range
+   *
+   * @description Counts Business days between two dates while also considering
+   * public holiday patterns supplied as part of "publicHolidays".
+   */
+  private static _CountBusinessDaysForComplexHolidayPatterns(
+    firstDate: Date,
+    secondDate: Date,
+    publicHolidays: PublicHolidayRule
+  ): {
+    calculatedPublicHolidays: Date[];
+    holidaysToOffset: Date[];
+    workdays: Date[];
+  } {
+    const holidaysToOffset: Date[] = [];
+    const calculatedPublicHolidays: Date[] = [];
+
+    const workdays = BusinessDayCounter.GetDatesInRange(firstDate, secondDate)
+      .filter(date => {
+        return !publicHolidays.holidays.some(holiday => {
+          // when date rule is of type static dates, count weekdays
+          if (isHolidayOnDatesRuleGuard(holiday)) {
+            if (holiday[dateToMonth(date)]?.includes(date.getDate())) {
+              calculatedPublicHolidays.push(date);
+              if (publicHolidays.offsetToNextWeekday && !isWeekDay(date)) {
+                holidaysToOffset.push(date);
+              }
+              return true;
+            }
+            return false;
+          }
+
+          // when date rule is of type complex date pattern, count weekdays
+          const daysOfWeekRule = holiday[dateToMonth(date)]
+            ? holiday[dateToMonth(date)]![dateToDay(date)]
+            : [];
+
+          const daysOfWeekMatches = daysOfWeekRule
+            ?.map(dayOccurrence => nthDayOfMonth(date, dayOccurrence))
+            .includes(date.getDate());
+
+          if (daysOfWeekMatches) {
+            calculatedPublicHolidays.push(date);
+            if (publicHolidays.offsetToNextWeekday && !isWeekDay(date)) {
+              holidaysToOffset.push(date);
+            }
+            return true;
+          }
+          return false;
+        });
+      })
+      .filter(date => isWeekDay(date));
+
+    return {
+      workdays,
+      holidaysToOffset,
+      calculatedPublicHolidays,
+    };
+  }
+
+  /**
+   * @internal Internal method to calculate days to offset from total business days
+   *
+   * @description Offset may not be directly be redacted form total number of counted
+   * business days in cases where public holiday falls on the weekend but the second date
+   * that we are counting upto might not have enough business days available to offset from
+   *
+   */
+  private static _CountDaysToOffset({
+    endDate,
+    calculatedPublicHolidays,
+    holidaysToOffset,
+  }: {
+    endDate: Date;
+    calculatedPublicHolidays: Date[];
+    holidaysToOffset: Date[];
+  }) {
+    let daysToOffset = 0;
+    while (holidaysToOffset.length && holidaysToOffset[0] instanceof Date) {
+      const holiday = holidaysToOffset.shift()!;
+
+      const hasDateInRangeToOffsetTo = BusinessDayCounter.GetDatesInRange(
+        holiday,
+        endDate
+      ).filter(
+        date =>
+          isWeekDay(date) &&
+          !calculatedPublicHolidays
+            .map(holiday => holiday.toDateString())
+            .includes(date.toDateString())
+      );
+
+      if (hasDateInRangeToOffsetTo.length) {
+        daysToOffset++;
+      }
+    }
+
+    return daysToOffset;
   }
 }
