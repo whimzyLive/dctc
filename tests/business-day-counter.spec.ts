@@ -8,12 +8,10 @@ describe('WeekdaysBetweenTwoDates', () => {
     ['2013-10-07', '2013-01-05', '0'],
   ];
 
-  const businessDateCounter = new BusinessDayCounter();
-
   it.each(datasets)(
     'returns weekday count for date range',
     (start: string, end: string, expectedValue: string) => {
-      const weekDays = businessDateCounter.WeekdaysBetweenTwoDates(
+      const weekDays = BusinessDayCounter.WeekdaysBetweenTwoDates(
         new Date(start),
         new Date(end)
       );
@@ -22,10 +20,58 @@ describe('WeekdaysBetweenTwoDates', () => {
   );
 
   it('handles invalid date inputs', () => {
-    const weekDays = businessDateCounter.WeekdaysBetweenTwoDates(
+    const weekDays = BusinessDayCounter.WeekdaysBetweenTwoDates(
       new Date('something'),
       new Date('totally-random')
     );
     expect(weekDays).toEqual(0);
+  });
+});
+
+describe('GetDatesInRange', () => {
+  it('returns dates between two date ranges, within same months', () => {
+    const dates = BusinessDayCounter.GetDatesInRange(
+      new Date('2023-01-10'),
+      new Date('2023-01-13')
+    );
+
+    expect(dates.length).toEqual(2);
+    expect(dates.map(d => d.toLocaleDateString('en-AU'))).toEqual([
+      '11/01/2023',
+      '12/01/2023',
+    ]);
+  });
+
+  it('returns dates between two date ranges, across different months', () => {
+    const dates = BusinessDayCounter.GetDatesInRange(
+      new Date('2023-01-28'),
+      new Date('2023-02-02')
+    );
+
+    expect(dates.length).toEqual(4);
+    expect(dates.map(d => d.toLocaleDateString('en-AU'))).toEqual([
+      '29/01/2023',
+      '30/01/2023',
+      '31/01/2023',
+      '01/02/2023',
+    ]);
+  });
+
+  it('returns 0 when end date is smaller then start date', () => {
+    const dates = BusinessDayCounter.GetDatesInRange(
+      new Date('2023-01-02'),
+      new Date('2023-01-01')
+    );
+
+    expect(dates.length).toEqual(0);
+  });
+
+  it('returns 0 when end date is same as start date', () => {
+    const dates = BusinessDayCounter.GetDatesInRange(
+      new Date('2023-01-02'),
+      new Date('2023-01-02')
+    );
+
+    expect(dates.length).toEqual(0);
   });
 });
