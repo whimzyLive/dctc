@@ -1,1 +1,1 @@
-# dctc
+# Design Crowd - Technical Challenge
