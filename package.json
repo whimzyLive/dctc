@@ -13,7 +13,7 @@
   "scripts": {
     "clean": "gts clean",
     "build": "tsc",
-    "lint:check": "gts lint",
+    "lint": "gts lint",
     "lint:fix": "gts fix",
     "test": "jest",
     "semantic-release": "semantic-release"
