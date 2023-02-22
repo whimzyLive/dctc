@@ -14,14 +14,22 @@
     "build": "tsc",
     "lint:check": "gts lint",
     "lint:fix": "gts fix",
-    "prepare": "npm run build",
-    "pretest": "npm run build",
+    "prepare": "yarn build",
+    "pretest": "yarn build",
     "test": "jest",
-    "posttest": "npm run lint"
+    "posttest": "yarn lint"
   },
   "devDependencies": {
+    "@commitlint/cli": "^17.4.4",
+    "@commitlint/config-conventional": "^17.4.4",
     "@types/node": "^18.14.0",
     "gts": "^3.1.1",
+    "husky": "^8.0.3",
     "typescript": "~4.4.0"
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
   }
 }
