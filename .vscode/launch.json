@@ -16,6 +16,28 @@
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
       ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Jest Debug Current file",
+      "runtimeExecutable": "${env:HOME}/.nvm/versions/node/v18.14.2/bin/node",
+      "runtimeArgs": [
+        "--inspect-brk",
+        "--nolazy",
+        "node_modules/jest/bin/jest",
+        "${fileBasename}",
+        "--runInBand",
+        "--watch",
+        "--config=jest.config.js"
+      ],
+      "sourceMaps": true,
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "NODE_ENV": "test"
+      }
     }
   ]
 }
