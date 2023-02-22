@@ -1,0 +1,86 @@
+name: Continuous Integration
+on:
+  push:
+  pull_request:
+jobs:
+  dependencies:
+    name: 'Install dependencies'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18.x'
+      - name: Setup Yarn
+        run: npm install -g yarn
+      - name: Cache NPM dependencies
+        uses: actions/cache@v2
+        with:
+          # cache files are stored in `~/.npm` on Linux/macOS
+          path: node_modules
+          key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-cache-
+      - name: Install
+        run: yarn install
+  lint:
+    name: Lint
+    needs: dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18.x'
+      - name: Load dependencies
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-cache-
+      - name: Lint
+        run: |
+          yarn lint
+  build:
+    name: Build & Test
+    needs: dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18.x'
+      - name: Load dependencies
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-cache-
+      - name: Build
+        run: |
+          yarn build
+          yarn test
+  publish:
+    name: Publish
+    needs: lint,build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Semantic Release
+        uses: cycjimmy/semantic-release-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        # TODO: remove this once working
+        with:
+          dry_run: true          
+          
