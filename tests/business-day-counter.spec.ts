@@ -28,6 +28,40 @@ describe('WeekdaysBetweenTwoDates', () => {
   });
 });
 
+describe('BusinessDaysBetweenTwoDates', () => {
+  const datasets = [
+    ['2013-10-07', '2013-10-09', '1'],
+    ['2013-12-24', '2013-12-27', '0'],
+    ['2013-10-07', '2014-01-01', '59'],
+  ];
+
+  const publicHolidays = [
+    new Date('2013-12-25'),
+    new Date('2013-12-26'),
+    new Date('2014-01-01'),
+  ];
+
+  it.each(datasets)(
+    'returns weekday count for date range',
+    (start: string, end: string, expectedValue: string) => {
+      const weekDays = BusinessDayCounter.BusinessDaysBetweenTwoDates(
+        new Date(start),
+        new Date(end),
+        publicHolidays
+      );
+      expect(weekDays.toString()).toEqual(expectedValue);
+    }
+  );
+
+  it('handles invalid date inputs', () => {
+    const weekDays = BusinessDayCounter.WeekdaysBetweenTwoDates(
+      new Date('something'),
+      new Date('totally-random')
+    );
+    expect(weekDays).toEqual(0);
+  });
+});
+
 describe('GetDatesInRange', () => {
   it('returns dates between two date ranges, within same months', () => {
     const dates = BusinessDayCounter.GetDatesInRange(
