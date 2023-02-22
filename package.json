@@ -1,0 +1,27 @@
+{
+  "name": "dctc",
+  "version": "0.0.0",
+  "description": "Design Crowed - Technical Challenge",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "files": [
+    "dist/src"
+  ],
+  "license": "Apache-2.0",
+  "keywords": [],
+  "scripts": {
+    "clean": "gts clean",
+    "build": "tsc",
+    "lint:check": "gts lint",
+    "lint:fix": "gts fix",
+    "prepare": "npm run build",
+    "pretest": "npm run build",
+    "test": "jest",
+    "posttest": "npm run lint"
+  },
+  "devDependencies": {
+    "@types/node": "^18.14.0",
+    "gts": "^3.1.1",
+    "typescript": "~4.4.0"
+  }
+}
