@@ -15,7 +15,8 @@
       "@semantic-release/git",
       {
         "assets": [
-          "docs/CHANGELOG.md"
+          "docs/CHANGELOG.md",
+          "package.json"
         ]
       }
     ],
@@ -24,7 +25,8 @@
       {
         "assets": [
           {
-            "path": "dist/*"
+            "path": "dist.zip",
+            "name": "dctc-${nextRelease.gitTag}.zip"
           }
         ]
       }

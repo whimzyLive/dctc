@@ -73,7 +73,7 @@ jobs:
         with:
           name: dist
           path: |
-            dist          
+            dist
   publish:
     name: Publish
     needs: build
@@ -85,6 +85,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Download Artifacts
-        uses: actions/upload-artifact@v3 
+        uses: actions/download-artifact@v3
+      - name: View Artifacts
+        run: ls -la
+      - name: Compress Build
+        run: zip -r dist.zip dist/src/
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v3
