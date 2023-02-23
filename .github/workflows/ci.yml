@@ -79,8 +79,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v3
-        # TODO: remove this once working
-        with:
-          dry_run: true
-          
+        uses: cycjimmy/semantic-release-action@v3          
