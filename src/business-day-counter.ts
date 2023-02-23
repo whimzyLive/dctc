@@ -9,6 +9,7 @@ import {dateToDay} from './utils/date-to-day';
 
 export class BusinessDayCounter extends BaseDayCounter {
   /**
+   * @public
    * @param firstDate Start Date to lookup from
    * @param secondDate End Date to lookup upto
    * @returns Number of weekdays between given date range
@@ -20,6 +21,7 @@ export class BusinessDayCounter extends BaseDayCounter {
   }
 
   /**
+   * @public
    * @param firstDate Start Date to lookup from
    * @param secondDate End Date to lookup from
    * @param publicHolidays List of public holiday dates or more complex rules to
@@ -60,7 +62,7 @@ export class BusinessDayCounter extends BaseDayCounter {
   }
 
   /**
-   * @internal Internal method to business calculate days between date range
+   * @private Internal method to business calculate days between date range
    *
    * @description Counts Business days between two dates while considering
    * supplied list of public holidays.
@@ -84,7 +86,7 @@ export class BusinessDayCounter extends BaseDayCounter {
   }
 
   /**
-   * @internal Internal method to business calculate days between date range
+   * @private Internal method to business calculate days between date range
    *
    * @description Counts Business days between two dates while also considering
    * public holiday patterns supplied as part of "publicHolidays".
@@ -145,7 +147,7 @@ export class BusinessDayCounter extends BaseDayCounter {
   }
 
   /**
-   * @internal Internal method to calculate days to offset from total business days
+   * @private Internal method to calculate days to offset from total business days
    *
    * @description Offset may not be directly be redacted form total number of counted
    * business days in cases where public holiday falls on the weekend but the second date
