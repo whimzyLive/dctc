@@ -68,6 +68,12 @@ jobs:
         run: |
           yarn build
           yarn test
+      - name: Archive lib package
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: |
+            dist          
   publish:
     name: Publish
     needs: build
@@ -78,5 +84,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Download Artifacts
+        uses: actions/upload-artifact@v3 
       - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v3          
+        uses: cycjimmy/semantic-release-action@v3
